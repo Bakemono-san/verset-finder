@@ -11,6 +11,8 @@ import {
 
 export type MicState = "idle" | "listening" | "processing" | "done" | "error";
 
+export type MicPermission = "granted" | "prompt" | "denied" | "unknown";
+
 export interface UseVersetDetectionOptions extends DetectOptions, LoadDataOptions {
   lang?: string;
   /** Auto-detect on every final transcript. Default true. */
@@ -27,6 +29,10 @@ export interface UseVersetDetection {
   interim: string;
   result: DetectionResult | null;
   error: string | null;
+  /** Transient non-fatal notice (e.g. "no-speech"). Null when none. */
+  hint: string | null;
+  /** Microphone permission status. */
+  permission: MicPermission;
   supported: boolean;
   ayahCount: number;
   indexReady: boolean;
@@ -57,6 +63,8 @@ export function useVersetDetection(opts: UseVersetDetectionOptions = {}): UseVer
   const [interim, setInterim] = useState("");
   const [result, setResult] = useState<DetectionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hint, setHint] = useState<string | null>(null);
+  const [permission, setPermission] = useState<MicPermission>("unknown");
   const [indexReady, setIndexReady] = useState(false);
   const [ayahCount, setAyahCount] = useState(0);
 
@@ -64,10 +72,32 @@ export function useVersetDetection(opts: UseVersetDetectionOptions = {}): UseVer
   const providerRef = useRef<WebSpeechProvider | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const transcriptRef = useRef("");
+  const startStampRef = useRef(0);
+  const launchRef = useRef<() => void>(() => {});
+  const langRef = useRef(lang);
+  langRef.current = lang;
   const onDetectRef = useRef(onDetect);
   const onErrorRef = useRef(onError);
   onDetectRef.current = onDetect;
   onErrorRef.current = onError;
+
+  const refreshPermission = useCallback(() => {
+    try {
+      const nav = navigator as unknown as {
+        permissions?: { query(o: { name: string }): Promise<{ state: string }> };
+      };
+      nav.permissions
+        ?.query({ name: "microphone" })
+        .then((r) => setPermission((r.state as MicPermission) ?? "unknown"))
+        .catch(() => setPermission("unknown"));
+    } catch {
+      setPermission("unknown");
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshPermission();
+  }, [refreshPermission]);
 
   const detectOpts = useMemo<DetectOptions>(
     () => ({ surah, topK, rejectBelow, acceptAbove, maxSpan }),
@@ -139,9 +169,65 @@ export function useVersetDetection(opts: UseVersetDetectionOptions = {}): UseVer
     };
   }, [transcript, autoDetect, debounceMs, detect]);
 
+  // Transient provider errors → hint (keep listening). Fatal ones → error.
+  const onProviderError = useCallback((msg: string) => {
+    if (msg === "no-speech") {
+      setHint("no-speech");
+      return;
+    }
+    setHint(null);
+    setError(msg);
+    setState("error");
+    onErrorRef.current?.(msg);
+  }, []);
+
+  // Chrome ends recognition on silence / ~60s cap: seamlessly resume while
+  // the user is still in "listening". An instant end means the mic is blocked.
+  const onProviderEnd = useCallback(() => {
+    if (stateRef.current !== "listening") return;
+    if (Date.now() - startStampRef.current < 1500) {
+      const msg = "mic-blocked";
+      setError(msg);
+      setState("error");
+      onErrorRef.current?.(msg);
+      return;
+    }
+    launchRef.current();
+  }, []);
+
+  // (Re)launch recognition without touching transcript/result state.
+  const launch = useCallback(() => {
+    let p = providerRef.current;
+    if (!p) {
+      p = new WebSpeechProvider();
+      providerRef.current = p;
+    }
+    startStampRef.current = Date.now();
+    p.start({
+      lang: langRef.current,
+      onResult: (text, isFinal) => {
+        if (isFinal) {
+          const next = (transcriptRef.current ? transcriptRef.current + " " + text : text).trim();
+          transcriptRef.current = next;
+          setTranscript(next);
+          setInterim("");
+          setHint(null);
+        } else {
+          setInterim(text);
+        }
+      },
+      onError: onProviderError,
+      onEnd: onProviderEnd,
+    });
+  }, [onProviderError, onProviderEnd]);
+
+  useEffect(() => {
+    launchRef.current = launch;
+  }, [launch]);
+
   const start = useCallback(() => {
-    if (!providerRef.current) providerRef.current = new WebSpeechProvider();
-    const p = providerRef.current;
+    const p = providerRef.current ?? new WebSpeechProvider();
+    providerRef.current = p;
     if (!p.isSupported()) {
       const msg = "not-supported";
       setError(msg);
@@ -149,32 +235,17 @@ export function useVersetDetection(opts: UseVersetDetectionOptions = {}): UseVer
       onErrorRef.current?.(msg);
       return;
     }
+    refreshPermission();
     setError(null);
+    setHint(null);
     setResult(null);
     resultRef.current = null;
     transcriptRef.current = "";
     setTranscript("");
     setInterim("");
     setState("listening");
-    p.start({
-      lang,
-      onResult: (text, isFinal) => {
-        if (isFinal) {
-          const next = (transcriptRef.current ? transcriptRef.current + " " + text : text).trim();
-          transcriptRef.current = next;
-          setTranscript(next);
-          setInterim("");
-        } else {
-          setInterim(text);
-        }
-      },
-      onError: (msg) => {
-        setError(msg);
-        setState("error");
-        onErrorRef.current?.(msg);
-      },
-    });
-  }, [lang]);
+    launchRef.current();
+  }, [launch, refreshPermission]);
 
   const stop = useCallback(() => {
     providerRef.current?.stop();
@@ -191,6 +262,7 @@ export function useVersetDetection(opts: UseVersetDetectionOptions = {}): UseVer
     setInterim("");
     setResult(null);
     setError(null);
+    setHint(null);
     setState("idle");
   }, []);
 
@@ -215,6 +287,8 @@ export function useVersetDetection(opts: UseVersetDetectionOptions = {}): UseVer
     interim,
     result,
     error,
+    hint,
+    permission,
     supported,
     ayahCount,
     indexReady,

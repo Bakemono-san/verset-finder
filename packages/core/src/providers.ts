@@ -6,7 +6,7 @@ export type ErrorHandler = (error: string) => void;
 export interface SpeechProvider {
   readonly name: string;
   isSupported(): boolean;
-  start(opts?: { lang?: string; onResult?: TranscriptHandler; onError?: ErrorHandler }): void | Promise<void>;
+  start(opts?: { lang?: string; onResult?: TranscriptHandler; onError?: ErrorHandler; onEnd?: () => void }): void | Promise<void>;
   stop(): void | Promise<void>;
   abort?(): void;
 }

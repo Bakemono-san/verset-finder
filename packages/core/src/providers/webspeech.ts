@@ -33,7 +33,7 @@ export class WebSpeechProvider implements SpeechProvider {
     return getCtor() !== null;
   }
 
-  start(opts?: { lang?: string; onResult?: TranscriptHandler; onError?: ErrorHandler }): void {
+  start(opts?: { lang?: string; onResult?: TranscriptHandler; onError?: ErrorHandler; onEnd?: () => void }): void {
     const Ctor = getCtor();
     if (!Ctor) {
       opts?.onError?.("not-supported");
@@ -57,10 +57,15 @@ export class WebSpeechProvider implements SpeechProvider {
       opts?.onResult?.(final + interim, final.length > 0);
     };
     r.onerror = (e: unknown) => {
+      // Forward everything (incl. "no-speech"): the hook decides between
+      // transient hint vs fatal error. Swallowing it leaves UIs stuck.
       const err = (e as { error?: string }).error ?? "unknown";
-      if (err !== "aborted" && err !== "no-speech") opts?.onError?.(err);
+      if (err === "aborted") return;
+      opts?.onError?.(err);
     };
-    r.onend = () => {};
+    r.onend = () => {
+      opts?.onEnd?.();
+    };
     this.rec = r;
     try {
       r.start();

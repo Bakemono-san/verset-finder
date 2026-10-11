@@ -39,6 +39,24 @@ const INDEX_LABEL: Record<string, string> = {
   en: "Loading Quran index…",
 };
 
+const HINT_LABEL: Record<string, Record<string, string>> = {
+  ar: { "no-speech": "لم يُسمع صوت — اقترب من الميكروفون وتكلّم بصوت أعلى" },
+  fr: { "no-speech": "Aucun son détecté — rapprochez-vous du micro et parlez plus fort" },
+  en: { "no-speech": "No speech heard — move closer to the mic and speak up" },
+};
+
+const PERM_LABEL: Record<string, string> = {
+  ar: "الميكروفون محظور — اضغط على 🔒 في شريط العنوان ثم اسمح بالميكروفون وأعد المحاولة",
+  fr: "Micro bloqué — cliquez sur 🔒 dans la barre d'adresse, autorisez le micro puis réessayez",
+  en: "Microphone blocked — click 🔒 in the address bar, allow the mic, then retry",
+};
+
+const ERROR_LABEL: Record<string, Record<string, string>> = {
+  ar: { "not-supported": "غير مدعوم", "mic-blocked": "تعذّر تشغيل الميكروفون", "network": "انقطع الاتصال — تحقق من الإنترنت" },
+  fr: { "not-supported": "non supporté", "mic-blocked": "micro inaccessible", "network": "connexion perdue — vérifiez internet" },
+  en: { "not-supported": "not supported", "mic-blocked": "mic unavailable", "network": "connection lost — check internet" },
+};
+
 const READY_LABEL: Record<string, (n: string) => string> = {
   ar: (n) => `${n} آية جاهزة للبحث`,
   fr: (n) => `${n} versets prêts`,
@@ -65,7 +83,7 @@ export function VersetFinderMic({
   accent = "#059669",
 }: VersetFinderMicProps): React.JSX.Element {
   const {
-    state, result, error, supported, transcript, interim,
+    state, result, error, hint, permission, supported, transcript, interim,
     indexReady, ayahCount, start, stop, reset,
   } = useVersetDetection({ lang, surah, indexUrl, onDetect, onError });
   const [open, setOpen] = useState(true);
@@ -162,7 +180,17 @@ export function VersetFinderMic({
 
       {error && state === "error" ? (
         <div style={styles.error} role="alert">
-          ⚠️ {error}
+          ⚠️ {(ERROR_LABEL[locale] ?? ERROR_LABEL.ar)[error] ?? error}
+        </div>
+      ) : null}
+      {permission === "denied" && state !== "error" ? (
+        <div style={styles.warn} role="alert">
+          {PERM_LABEL[locale] ?? PERM_LABEL.ar}
+        </div>
+      ) : null}
+      {hint && (listening || state === "processing") ? (
+        <div style={styles.hintWarn} role="status">
+          {(HINT_LABEL[locale] ?? HINT_LABEL.ar)[hint] ?? hint}
         </div>
       ) : null}
 
@@ -221,6 +249,11 @@ const styles: Record<string, React.CSSProperties> = {
   warn: {
     borderWidth: 1, borderStyle: "solid", borderColor: "#f59e0b",
     background: "#fffbeb", borderRadius: 8, padding: 8, fontSize: 13,
+  },
+  hintWarn: {
+    color: "#92400e", background: "#fffbeb",
+    borderWidth: 1, borderStyle: "solid", borderColor: "#fde68a",
+    borderRadius: 8, padding: "6px 10px", fontSize: 12,
   },
   error: {
     color: "#b91c1c", background: "#fef2f2",

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { QuranIndex, detectAyah } from "@bakemono-san/verset-finder";
 import { VersetFinderMic } from "@bakemono-san/verset-finder-react";
 import type { DetectionResult } from "@bakemono-san/verset-finder";
@@ -89,7 +89,19 @@ export function App() {
       {routed ? <p style={s.routed}>🧭 Navigation simulée → <code>{routed}</code></p> : null}
 
       <section style={s.card}>
-        <h2 style={s.h2}>3 · Intégration <span style={s.tag}>copier-coller</span></h2>
+        <h2 style={s.h2}>3 · Diagnostic micro <span style={s.tag}>recitation test</span></h2>
+        <Diag />
+        <ol style={s.steps}>
+          <li>Utilisez <strong>Chrome ou Edge</strong> (pas Firefox).</li>
+          <li>Cliquez <strong>تلاوة للبحث</strong> puis <strong>Autoriser</strong> le micro.</li>
+          <li>Récitez fort, ex. <em>قل هو الله أحد، الله الصمد…</em> — le texte apparaît en direct.</li>
+          <li>Si «&nbsp;Aucun son détecté&nbsp;» → vérifiez le micro système / l'onglet n'est pas muet.</li>
+          <li>La transcription passe par les serveurs Google : <strong>internet requis</strong>.</li>
+        </ol>
+      </section>
+
+      <section style={s.card}>
+        <h2 style={s.h2}>4 · Intégration <span style={s.tag}>copier-coller</span></h2>
         <pre style={s.code}>
 {`// mon-coran (React+Vite, état local)
 // import { VersetFinderMic } from "@bakemono-san/verset-finder-react";
@@ -111,6 +123,45 @@ export function App() {
 }
 export default App;
 
+function Diag() {
+  const [perm, setPerm] = useState("…");
+  const [idxOk, setIdxOk] = useState("…");
+  const supported =
+    typeof window !== "undefined" &&
+    Boolean((window as unknown as Record<string, unknown>).SpeechRecognition ??
+      (window as unknown as Record<string, unknown>).webkitSpeechRecognition);
+  useEffect(() => {
+    try {
+      (navigator as unknown as { permissions?: { query(o: { name: string }): Promise<{ state: string }> } })
+        .permissions?.query({ name: "microphone" })
+        .then((r) => setPerm(r.state))
+        .catch(() => setPerm("unknown"));
+    } catch {
+      setPerm("unknown");
+    }
+    fetch("/verset-finder-index.json", { method: "HEAD" })
+      .then((r) => setIdxOk(r.ok ? "ok (6236 versets)" : `HTTP ${r.status}`))
+      .catch(() => setIdxOk("échec réseau"));
+  }, []);
+  const rows: Array<[string, string, boolean]> = [
+    ["Navigateur", supported ? "compatible (Web Speech OK)" : "INCOMPATIBLE — utilisez Chrome/Edge", supported],
+    ["Permission micro", perm, perm === "granted" || perm === "prompt"],
+    ["Index Coran", idxOk, idxOk.startsWith("ok")],
+    ["Protocole", `${window.location.protocol}//${window.location.host}`, window.location.protocol === "https:" || window.location.hostname === "localhost"],
+  ];
+  return (
+    <div style={{ display: "grid", gap: 4, marginBottom: 8, fontSize: 13 }}>
+      {rows.map(([k, v, ok]) => (
+        <div key={k} style={{ display: "flex", gap: 8 }}>
+          <span>{ok ? "✅" : "❌"}</span>
+          <span style={{ color: "#4b5563" }}>{k} :</span>
+          <strong>{v}</strong>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const s: Record<string, React.CSSProperties> = {
   page: { fontFamily: "system-ui, sans-serif", padding: 24, maxWidth: 680, margin: "0 auto", background: "#f8fafc", minHeight: "100vh", color: "#111827" },
   header: { marginBottom: 16 },
@@ -128,5 +179,6 @@ const s: Record<string, React.CSSProperties> = {
   details: { fontSize: 12, color: "#4b5563" },
   pre: { background: "#f3f4f6", padding: 12, borderRadius: 8, overflowX: "auto", fontSize: 12 },
   routed: { background: "#ecfdf5", borderWidth: 1, borderStyle: "solid", borderColor: "#a7f3d0", borderRadius: 8, padding: "8px 12px", fontSize: 14 },
+  steps: { fontSize: 13, color: "#374151", lineHeight: 1.9, paddingInlineStart: 20, margin: "8px 0 0" },
   code: { background: "#111827", color: "#e5e7eb", padding: 12, borderRadius: 8, overflowX: "auto", fontSize: 12, margin: 0 },
 };
