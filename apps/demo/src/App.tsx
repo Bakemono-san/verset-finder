@@ -31,7 +31,7 @@ export function App() {
       <p>Récitez au micro, ou testez en texte. Le composant redirige vers surah:ayah.</p>
 
       <h2>1. Composant drop-in</h2>
-      <VersetFinderMic locale="ar" onDetect={onDetect} />
+      <VersetFinderMic locale="ar" indexUrl="/verset-finder-index.json" onDetect={onDetect} />
 
       <h2>2. Test manuel (headless core)</h2>
       <div style={{ display: "flex", gap: 8 }}>
@@ -54,7 +54,7 @@ export function App() {
       <h2>3. Intégration (copier-coller)</h2>
       <pre style={{ background: "#111827", color: "#e5e7eb", padding: 12, borderRadius: 8, overflowX: "auto" }}>
 {`// mon-coran (React+Vite, état local)
-// import { VersetFinderMic } from "@bakemono-san/verset-finder/react";
+// import { VersetFinderMic } from "@bakemono-san/verset-finder-react";
 <VersetFinderMic onDetect={(r) => {
   if (r.status === "reject") return;
   setCurrentSurah(r.surah); setCurrentAyah(r.ayah);

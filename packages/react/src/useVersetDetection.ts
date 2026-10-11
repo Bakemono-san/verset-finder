@@ -63,6 +63,7 @@ export function useVersetDetection(opts: UseVersetDetectionOptions = {}): UseVer
   const indexRef = useRef<QuranIndex | null>(null);
   const providerRef = useRef<WebSpeechProvider | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const transcriptRef = useRef("");
   const onDetectRef = useRef(onDetect);
   const onErrorRef = useRef(onError);
   onDetectRef.current = onDetect;
@@ -99,8 +100,12 @@ export function useVersetDetection(opts: UseVersetDetectionOptions = {}): UseVer
   const detect = useCallback(
     (text: string): DetectionResult | null => {
       const idx = indexRef.current;
+      // Index not ready yet (still downloading): stay in "processing" — the
+      // index-ready effect below retries as soon as it arrives. Never leave
+      // the UI stuck silently.
       if (!idx || !text.trim()) return null;
       const r = detectAyah(text, idx, detectOpts);
+      resultRef.current = r;
       setResult(r);
       setState("done");
       onDetectRef.current?.(r);
@@ -108,6 +113,20 @@ export function useVersetDetection(opts: UseVersetDetectionOptions = {}): UseVer
     },
     [detectOpts],
   );
+
+  // Retry path for the index-loading race: transcript arrived before the
+  // Quran index finished downloading → detect once it is ready.
+  // Guards: only while still "processing" with no result yet, so this fires
+  // at most once (detect flips state to "done").
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  const resultRef = useRef(result);
+  resultRef.current = result;
+  useEffect(() => {
+    if (!indexReady || !autoDetect || !transcriptRef.current) return;
+    if (resultRef.current || stateRef.current !== "processing") return;
+    detect(transcriptRef.current);
+  }, [indexReady, autoDetect, detect]);
 
   // Debounced auto-detect on final transcript.
   useEffect(() => {
@@ -132,6 +151,8 @@ export function useVersetDetection(opts: UseVersetDetectionOptions = {}): UseVer
     }
     setError(null);
     setResult(null);
+    resultRef.current = null;
+    transcriptRef.current = "";
     setTranscript("");
     setInterim("");
     setState("listening");
@@ -139,7 +160,9 @@ export function useVersetDetection(opts: UseVersetDetectionOptions = {}): UseVer
       lang,
       onResult: (text, isFinal) => {
         if (isFinal) {
-          setTranscript((prev) => (prev ? prev + " " + text : text).trim());
+          const next = (transcriptRef.current ? transcriptRef.current + " " + text : text).trim();
+          transcriptRef.current = next;
+          setTranscript(next);
           setInterim("");
         } else {
           setInterim(text);
@@ -156,12 +179,14 @@ export function useVersetDetection(opts: UseVersetDetectionOptions = {}): UseVer
   const stop = useCallback(() => {
     providerRef.current?.stop();
     setInterim("");
-    setState((s) => (s === "listening" ? "processing" : s));
+    // Nothing heard → back to idle instead of a "processing" dead-end.
+    setState((s) => (s === "listening" ? (transcriptRef.current ? "processing" : "idle") : s));
   }, []);
 
   const reset = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     providerRef.current?.stop();
+    transcriptRef.current = "";
     setTranscript("");
     setInterim("");
     setResult(null);

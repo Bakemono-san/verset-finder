@@ -31,6 +31,12 @@ const STATUS_LABEL: Record<string, Record<string, string>> = {
   en: { accept: "Match", low: "Partial", reject: "Uncertain" },
 };
 
+const INDEX_LABEL: Record<string, string> = {
+  ar: "جارٍ تحميل المصحف…",
+  fr: "Chargement du Coran…",
+  en: "Loading Quran index…",
+};
+
 /**
  * Optional drop-in mic button. Unstyled by default (inline styles, no Tailwind
  * dependency) — bring your own className. Headless alternative: useVersetDetection.
@@ -46,7 +52,7 @@ export function VersetFinderMic({
   className,
   compact = false,
 }: VersetFinderMicProps): React.JSX.Element {
-  const { state, result, error, supported, start, stop, reset } = useVersetDetection({
+  const { state, result, error, supported, transcript, indexReady, ayahCount, start, stop, reset } = useVersetDetection({
     lang,
     surah,
     indexUrl,
@@ -91,6 +97,23 @@ export function VersetFinderMic({
         {compact ? null : <span>{t[state]}</span>}
       </button>
       {state === "processing" ? <span style={styles.hint}>…</span> : null}
+      {!indexReady && state !== "error" ? (
+        <span style={styles.hint}>{INDEX_LABEL[locale] ?? INDEX_LABEL.ar}</span>
+      ) : null}
+      {indexReady && ayahCount > 0 && state === "idle" ? (
+        <span style={styles.hint}>
+          {locale === "fr"
+            ? `${ayahCount.toLocaleString("fr-FR")} versets prêts`
+            : locale === "en"
+              ? `${ayahCount.toLocaleString("en-US")} ayahs ready`
+              : `${ayahCount.toLocaleString("ar-EG")} آية جاهزة`}
+        </span>
+      ) : null}
+      {transcript ? (
+        <div style={styles.transcript} dir="rtl">
+          {transcript}
+        </div>
+      ) : null}
       {error && state === "error" ? (
         <div style={styles.error} role="alert">
           {error}
@@ -137,6 +160,7 @@ const styles: Record<string, React.CSSProperties> = {
   listening: { borderColor: "#dc2626", background: "#fef2f2" },
 
   hint: { fontSize: 12, opacity: 0.7 },
+  transcript: { fontSize: 14, lineHeight: 2, color: "#374151" },
   warn: {
     border: "1px solid #f59e0b",
     background: "#fffbeb",

@@ -1,6 +1,6 @@
 {
   "name": "@bakemono-san/verset-finder-react",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "React bindings for verset-finder: useVersetDetection hook + VersetFinderMic component.",
   "keywords": ["quran", "ayah", "verse-detection", "react", "microphone", "arabic"],
   "author": "Bakemono San",
