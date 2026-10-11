@@ -1,0 +1,51 @@
+{
+  "name": "@bakemono_san/verset-finder-react",
+  "version": "0.1.0",
+  "description": "React bindings for verset-finder: useVersetDetection hook + VersetFinderMic component.",
+  "keywords": ["quran", "ayah", "verse-detection", "react", "microphone", "arabic"],
+  "author": "Bakemono San",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bakemono-san/verset-finder.git",
+    "directory": "packages/react"
+  },
+  "homepage": "https://github.com/bakemono-san/verset-finder#readme",
+  "bugs": "https://github.com/bakemono-san/verset-finder/issues",
+  "engines": { "node": ">=18" },
+  "sideEffects": false,
+  "publishConfig": { "access": "public" },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "peerDependencies": {
+    "react": "^17 || ^18 || ^19"
+  },
+  "dependencies": {
+    "@bakemono_san/verset-finder": "workspace:^0.1.0"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --minify --external react --out-dir dist",
+    "test": "echo \"react: no tests (core covers logic)\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "tsup": "^8.3.5",
+    "typescript": "^5.6.3"
+  }
+}

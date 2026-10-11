@@ -1,0 +1,28 @@
+# Deps & build output
+node_modules/
+packages/*/dist/
+apps/*/dist/
+
+# pnpm
+.pnpm-store/
+
+# Env & OS
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+
+# Logs & test artifacts
+*.log
+npm-debug.log*
+test-results/
+playwright-report/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Packed tarballs
+*.tgz
