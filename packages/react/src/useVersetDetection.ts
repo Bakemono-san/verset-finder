@@ -7,7 +7,7 @@ import {
   type DetectionResult,
   type DetectOptions,
   type LoadDataOptions,
-} from "@bakemono_san/verset-finder";
+} from "@bakemono-san/verset-finder";
 
 export type MicState = "idle" | "listening" | "processing" | "done" | "error";
 

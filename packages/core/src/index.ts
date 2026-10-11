@@ -1,5 +1,5 @@
 /**
- * @bakemono_san/verset-finder — core entry (headless, no DOM at import).
+ * @bakemono-san/verset-finder — core entry (headless, no DOM at import).
  * Tree-shakeable: import only what you need.
  */
 export type {

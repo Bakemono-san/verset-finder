@@ -1,6 +1,6 @@
 // Build script: fetch Hafs quran-simple from alquran.cloud, emit quran-data.ts + index stats.
 // Fallback: small offline fixture (Al-Fatiha + Al-Ikhlas) so builds/tests never break offline.
-// Usage: pnpm --filter @bakemono_san/verset-finder build:data
+// Usage: pnpm --filter @bakemono-san/verset-finder build:data
 import { writeFile, mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

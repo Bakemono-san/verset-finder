@@ -17,10 +17,10 @@ importers:
 
   apps/demo:
     dependencies:
-      '@bakemono_san/verset-finder':
+      '@bakemono-san/verset-finder':
         specifier: workspace:^0.1.0
         version: link:../../packages/core
-      '@bakemono_san/verset-finder-react':
+      '@bakemono-san/verset-finder-react':
         specifier: workspace:^0.1.0
         version: link:../../packages/react
       react:
@@ -60,7 +60,7 @@ importers:
 
   packages/react:
     dependencies:
-      '@bakemono_san/verset-finder':
+      '@bakemono-san/verset-finder':
         specifier: workspace:^0.1.0
         version: link:../core
       react:

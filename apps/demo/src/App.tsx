@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { QuranIndex, detectAyah } from "@bakemono_san/verset-finder";
-import { VersetFinderMic } from "@bakemono_san/verset-finder-react";
-import type { DetectionResult } from "@bakemono_san/verset-finder";
+import { QuranIndex, detectAyah } from "@bakemono-san/verset-finder";
+import { VersetFinderMic } from "@bakemono-san/verset-finder-react";
+import type { DetectionResult } from "@bakemono-san/verset-finder";
 
 // Tiny offline fixture so the demo works with zero network.
 const ROWS = [
@@ -54,7 +54,7 @@ export function App() {
       <h2>3. Intégration (copier-coller)</h2>
       <pre style={{ background: "#111827", color: "#e5e7eb", padding: 12, borderRadius: 8, overflowX: "auto" }}>
 {`// mon-coran (React+Vite, état local)
-// import { VersetFinderMic } from "@bakemono_san/verset-finder/react";
+// import { VersetFinderMic } from "@bakemono-san/verset-finder/react";
 <VersetFinderMic onDetect={(r) => {
   if (r.status === "reject") return;
   setCurrentSurah(r.surah); setCurrentAyah(r.ayah);

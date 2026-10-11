@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useVersetDetection, type MicState } from "./useVersetDetection.js";
-import type { DetectionResult } from "@bakemono_san/verset-finder";
+import type { DetectionResult } from "@bakemono-san/verset-finder";
 
 export interface VersetFinderMicProps {
   /** Called with every accepted/low detection. Wire to your router. */

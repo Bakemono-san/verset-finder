@@ -1,4 +1,4 @@
-# 🎙️ `@bakemono_san/verset-finder`
+# 🎙️ `@bakemono-san/verset-finder`
 
 Drop-in Quran verse finder: user clicks mic → recites → your app navigates to `surah:ayah`.
 
@@ -9,7 +9,7 @@ Drop-in Quran verse finder: user clicks mic → recites → your app navigates t
 ## 5-line quickstart
 
 ```tsx
-import { VersetFinderMic } from "@bakemono_san/verset-finder-react";
+import { VersetFinderMic } from "@bakemono-san/verset-finder-react";
 
 <VersetFinderMic onDetect={(r) => {
   if (r.status === "reject") return;          // <0.5 reject, 0.5–0.6 low, >0.6 accept
@@ -18,7 +18,7 @@ import { VersetFinderMic } from "@bakemono_san/verset-finder-react";
 ```
 
 ```bash
-pnpm add @bakemono_san/verset-finder @bakemono_san/verset-finder-react
+pnpm add @bakemono-san/verset-finder @bakemono-san/verset-finder-react
 ```
 
 ## API contract
@@ -30,7 +30,7 @@ pnpm add @bakemono_san/verset-finder @bakemono_san/verset-finder-react
 | `normalizeArabic / sanitizeVoiceTranscript / normalizeTranscript` | normalizers (mon-coran + Tarteel ports) |
 | `WebSpeechProvider` / `createWebSpeechProvider()` | WebSpeech-first mic (Chrome/Edge, `ar-SA`) |
 | `transcribeRest(audio, { baseUrl })` / `verifyWithServer(text, { baseUrl })` / `transcribeLive({ wsUrl })` / `createCustomProvider()` | optional server paths |
-| `useVersetDetection(opts)` / `<VersetFinderMic/>` (`@bakemono_san/verset-finder-react`) | React hook + unstyled mic button (rtl, locale ar/fr/en) |
+| `useVersetDetection(opts)` / `<VersetFinderMic/>` (`@bakemono-san/verset-finder-react`) | React hook + unstyled mic button (rtl, locale ar/fr/en) |
 
 Thresholds: **&lt;0.5 reject · 0.5–0.6 low · &gt;0.6 accept**. Spans of **1–3 consecutive ayahs** (same surah).
 

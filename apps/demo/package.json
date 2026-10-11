@@ -9,8 +9,8 @@
     "preview": "vite preview --port 5199"
   },
   "dependencies": {
-    "@bakemono_san/verset-finder": "workspace:^0.1.0",
-    "@bakemono_san/verset-finder-react": "workspace:^0.1.0",
+    "@bakemono-san/verset-finder": "workspace:^0.1.0",
+    "@bakemono-san/verset-finder-react": "workspace:^0.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

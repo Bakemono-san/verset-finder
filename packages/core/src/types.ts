@@ -1,4 +1,4 @@
-/** Core public types for @bakemono_san/verset-finder (Hafs-only v1). */
+/** Core public types for @bakemono-san/verset-finder (Hafs-only v1). */
 
 export interface AyahRef {
   /** Surah number 1..114 */
