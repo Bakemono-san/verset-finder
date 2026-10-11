@@ -7,11 +7,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bakemono-san/verset-finder.git",
+    "url": "git+https://github.com/Bakemono-san/verset-finder.git",
     "directory": "packages/core"
   },
-  "homepage": "https://github.com/bakemono-san/verset-finder#readme",
-  "bugs": "https://github.com/bakemono-san/verset-finder/issues",
+  "homepage": "https://github.com/Bakemono-san/verset-finder#readme",
+  "bugs": "https://github.com/Bakemono-san/verset-finder/issues",
   "engines": { "node": ">=18" },
   "sideEffects": false,
   "publishConfig": { "access": "public" },
