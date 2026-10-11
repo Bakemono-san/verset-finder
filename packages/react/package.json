@@ -1,6 +1,6 @@
 {
   "name": "@bakemono-san/verset-finder-react",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "React bindings for verset-finder: useVersetDetection hook + VersetFinderMic component.",
   "keywords": ["quran", "ayah", "verse-detection", "react", "microphone", "arabic"],
   "author": "Bakemono San",
@@ -36,7 +36,7 @@
     "react": "^17 || ^18 || ^19"
   },
   "dependencies": {
-    "@bakemono-san/verset-finder": "workspace:^0.1.0"
+    "@bakemono-san/verset-finder": "^0.1.0"
   },
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts --minify --external react --out-dir dist",
