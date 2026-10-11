@@ -1,6 +1,6 @@
 {
   "name": "@bakemono-san/verset-finder",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Drop-in Quran verse finder: mic recitation -> surah:ayah. Vanilla TS core (headless).",
   "keywords": ["quran", "ayah", "verse-detection", "speech-recognition", "arabic", "whisper", "tarteel"],
   "author": "Bakemono San",

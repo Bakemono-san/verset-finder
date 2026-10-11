@@ -2,6 +2,28 @@ import React, { useId, useState } from "react";
 import { useVersetDetection, type MicState } from "./useVersetDetection.js";
 import type { DetectionResult } from "@bakemono-san/verset-finder";
 
+export type VersetFinderLocale = "ar" | "fr" | "en";
+
+/** Full UI text override. Every field is optional — merges over the locale preset. */
+export interface VersetFinderLabels {
+  /** Mic button label per state. */
+  states?: Partial<Record<MicState, string>>;
+  /** Result badge per detection status. */
+  status?: Partial<Record<"accept" | "low" | "reject", string>>;
+  /** Shown while the Quran index loads. */
+  indexLoading?: string;
+  /** Shown when the index is ready; receives the formatted ayah count. */
+  ready?: (count: string) => string;
+  /** Transient hints by code (e.g. "no-speech"). */
+  hints?: Record<string, string>;
+  /** Shown when mic permission is denied. */
+  permissionDenied?: string;
+  /** Fatal errors by code (falls back to the raw code). */
+  errors?: Record<string, string>;
+  /** Shown when Web Speech API is unavailable. */
+  unsupported?: string;
+}
+
 export interface VersetFinderMicProps {
   /** Called with every accepted/low detection. Wire to your router. */
   onDetect?: (result: DetectionResult) => void;
@@ -9,9 +31,11 @@ export interface VersetFinderMicProps {
   lang?: string;
   surah?: number;
   indexUrl?: string;
-  /** "ar" | "fr" | "en" label language. Default "ar". */
-  locale?: "ar" | "fr" | "en";
-  /** Right-to-left layout. Default true for Arabic. */
+  /** "ar" | "fr" | "en" label preset. Default "en". Overridden by `labels`. */
+  locale?: VersetFinderLocale;
+  /** Partial text overrides — deepest merge wins over the locale preset. */
+  labels?: VersetFinderLabels;
+  /** Right-to-left layout. Default false (true only when locale is "ar" unless set). */
   rtl?: boolean;
   /** Extra className for the wrapper (no Tailwind required). */
   className?: string;
@@ -57,11 +81,38 @@ const ERROR_LABEL: Record<string, Record<string, string>> = {
   en: { "not-supported": "not supported", "mic-blocked": "mic unavailable", "network": "connection lost — check internet" },
 };
 
+const UNSUPPORTED_LABEL: Record<string, string> = {
+  ar: "⚠️ التعرّف الصوتي غير مدعوم. استعمل Chrome أو Edge.",
+  fr: "⚠️ Reconnaissance vocale non supportée. Utilisez Chrome ou Edge.",
+  en: "⚠️ Speech recognition not supported. Use Chrome or Edge.",
+};
+
 const READY_LABEL: Record<string, (n: string) => string> = {
   ar: (n) => `${n} آية جاهزة للبحث`,
   fr: (n) => `${n} versets prêts`,
   en: (n) => `${n} ayahs ready`,
 };
+
+/** Resolve final strings: English preset ← locale preset ← user `labels`. */
+function resolveLabels(locale: VersetFinderLocale, overrides?: VersetFinderLabels) {
+  const L = (table: Record<string, Record<MicState, string>>) => ({ ...table.en, ...table[locale], ...overrides?.states });
+  const S = (table: Record<string, Record<string, string>>) => ({ ...table.en, ...table[locale], ...overrides?.status });
+  const one = (table: Record<string, string>, key: "indexLoading" | "permissionDenied" | "unsupported") =>
+    overrides?.[key] ?? table[locale] ?? table.en;
+  const hints = { ...HINT_LABEL.en, ...HINT_LABEL[locale], ...overrides?.hints };
+  const errors = { ...ERROR_LABEL.en, ...ERROR_LABEL[locale], ...overrides?.errors };
+  const readyFn = overrides?.ready ?? READY_LABEL[locale] ?? READY_LABEL.en;
+  return {
+    states: L(LABELS) as Record<MicState, string>,
+    status: S(STATUS_LABEL) as Record<string, string>,
+    indexLoading: one(INDEX_LABEL, "indexLoading"),
+    permissionDenied: one(PERM_LABEL, "permissionDenied"),
+    unsupported: overrides?.unsupported ?? UNSUPPORTED_LABEL[locale] ?? UNSUPPORTED_LABEL.en,
+    hints,
+    errors,
+    ready: readyFn,
+  };
+}
 
 const MIC_GLYPH = "🎙️";
 const STOP_GLYPH = "⏹";
@@ -76,8 +127,9 @@ export function VersetFinderMic({
   lang = "ar-SA",
   surah,
   indexUrl,
-  locale = "ar",
-  rtl = true,
+  locale = "en",
+  labels,
+  rtl,
   className,
   compact = false,
   accent = "#059669",
@@ -88,8 +140,10 @@ export function VersetFinderMic({
   } = useVersetDetection({ lang, surah, indexUrl, onDetect, onError });
   const [open, setOpen] = useState(true);
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
-  const t = LABELS[locale] ?? LABELS.ar;
-  const s = STATUS_LABEL[locale] ?? STATUS_LABEL.ar;
+  const dir = (rtl ?? locale === "ar") ? "rtl" : "ltr";
+  const str = resolveLabels(locale, labels);
+  const t = str.states;
+  const s = str.status;
 
   const listening = state === "listening";
   const busy = listening || state === "processing";
@@ -103,12 +157,8 @@ export function VersetFinderMic({
 
   if (!supported) {
     return (
-      <div dir={rtl ? "rtl" : "ltr"} className={className} style={styles.warn} role="alert">
-        {locale === "fr"
-          ? "⚠️ Reconnaissance vocale non supportée. Utilisez Chrome ou Edge."
-          : locale === "en"
-            ? "⚠️ Speech recognition not supported. Use Chrome or Edge."
-            : "⚠️ التعرّف الصوتي غير مدعوم. استعمل Chrome أو Edge."}
+      <div dir={dir} className={className} style={styles.warn} role="alert">
+        {str.unsupported}
       </div>
     );
   }
@@ -117,7 +167,7 @@ export function VersetFinderMic({
   const pct = result ? Math.round(result.confidence * 100) : 0;
 
   return (
-    <div dir={rtl ? "rtl" : "ltr"} className={className} style={styles.wrap}>
+    <div dir={dir} className={className} style={styles.wrap}>
       {/* Scoped keyframes: pulse ring while listening, shimmer while processing */}
       <style>{`
         @keyframes vf-pulse-${uid} {
@@ -163,11 +213,11 @@ export function VersetFinderMic({
       </div>
 
       {!indexReady && state !== "error" ? (
-        <span style={styles.hint}>{INDEX_LABEL[locale] ?? INDEX_LABEL.ar}</span>
+        <span style={styles.hint}>{str.indexLoading}</span>
       ) : null}
       {indexReady && ayahCount > 0 && state === "idle" && !transcript ? (
         <span style={styles.hint}>
-          {(READY_LABEL[locale] ?? READY_LABEL.ar)(ayahCount.toLocaleString(locale === "fr" ? "fr-FR" : locale === "en" ? "en-US" : "ar-EG"))}
+          {str.ready(ayahCount.toLocaleString(locale === "fr" ? "fr-FR" : locale === "en" ? "en-US" : "ar-EG"))}
         </span>
       ) : null}
 
@@ -180,17 +230,17 @@ export function VersetFinderMic({
 
       {error && state === "error" ? (
         <div style={styles.error} role="alert">
-          ⚠️ {(ERROR_LABEL[locale] ?? ERROR_LABEL.ar)[error] ?? error}
+          ⚠️ {str.errors[error] ?? error}
         </div>
       ) : null}
       {permission === "denied" && state !== "error" ? (
         <div style={styles.warn} role="alert">
-          {PERM_LABEL[locale] ?? PERM_LABEL.ar}
+          {str.permissionDenied}
         </div>
       ) : null}
       {hint && (listening || state === "processing") ? (
         <div style={styles.hintWarn} role="status">
-          {(HINT_LABEL[locale] ?? HINT_LABEL.ar)[hint] ?? hint}
+          {str.hints[hint] ?? hint}
         </div>
       ) : null}
 

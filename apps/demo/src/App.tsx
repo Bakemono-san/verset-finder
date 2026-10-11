@@ -28,7 +28,7 @@ export function App() {
     // Next.js wiring: router.push(`/surah/${r.surah}?ayah=${r.ayah}`)
     setRouted(
       r.status === "reject"
-        ? `rejeté (confiance ${Math.round(r.confidence * 100)}%) — essayez de réciter plus nettement`
+        ? `rejected (confidence ${Math.round(r.confidence * 100)}%) — try reciting more clearly`
         : `surah=${r.surah} ayah=${r.ayah}${r.spanLength > 1 ? ` endAyah=${r.endAyah}` : ""} (${r.status}, ${Math.round(r.confidence * 100)}%)`,
     );
   };
@@ -36,27 +36,27 @@ export function App() {
   return (
     <div dir="ltr" style={s.page}>
       <header style={s.header}>
-        <h1 style={s.h1}>🎙️ VersetFinder — démo</h1>
-        <p style={s.sub}>Récitez au micro, ou testez en texte. Le composant redirige vers <code>surah:ayah</code>.</p>
+        <h1 style={s.h1}>🎙️ VersetFinder — demo</h1>
+        <p style={s.sub}>Recite into the mic, or test with text. The component redirects to <code>surah:ayah</code>.</p>
       </header>
 
       <section style={s.card}>
-        <h2 style={s.h2}>1 · Composant drop-in <span style={s.tag}>full Quran · 6236 versets</span></h2>
-        <VersetFinderMic locale="ar" indexUrl="/verset-finder-index.json" onDetect={onDetect} />
+        <h2 style={s.h2}>1 · Drop-in component <span style={s.tag}>full Quran · 6236 ayahs</span></h2>
+        <VersetFinderMic indexUrl="/verset-finder-index.json" onDetect={onDetect} />
       </section>
 
       <section style={s.card}>
-        <h2 style={s.h2}>2 · Test manuel <span style={s.tag}>headless core · 7 versets</span></h2>
+        <h2 style={s.h2}>2 · Manual test <span style={s.tag}>headless core · 7 ayahs</span></h2>
         <div style={{ display: "flex", gap: 8 }}>
           <input
             value={manual}
             onChange={(e) => setManual(e.target.value)}
             style={s.input}
             dir="rtl"
-            placeholder="اكتب آية…"
+            placeholder="Type an ayah…"
           />
           <button onClick={() => onDetect(detectAyah(manual, index))} style={s.btn}>
-            Détecter
+            Detect
           </button>
         </div>
       </section>
@@ -76,7 +76,7 @@ export function App() {
           </div>
           {result.matchedText ? <p style={s.matched} dir="rtl">{result.matchedText}</p> : null}
           <details style={s.details}>
-            <summary>JSON brut</summary>
+            <summary>Raw JSON</summary>
             <pre style={s.pre}>
               {JSON.stringify(
                 { surah: result.surah, ayah: result.ayah, endAyah: result.endAyah, status: result.status, confidence: result.confidence, transcript: result.transcript },
@@ -86,22 +86,22 @@ export function App() {
           </details>
         </section>
       ) : null}
-      {routed ? <p style={s.routed}>🧭 Navigation simulée → <code>{routed}</code></p> : null}
+      {routed ? <p style={s.routed}>🧭 Simulated navigation → <code>{routed}</code></p> : null}
 
       <section style={s.card}>
-        <h2 style={s.h2}>3 · Diagnostic micro <span style={s.tag}>recitation test</span></h2>
+        <h2 style={s.h2}>3 · Mic diagnostics <span style={s.tag}>recitation test</span></h2>
         <Diag />
         <ol style={s.steps}>
-          <li>Utilisez <strong>Chrome ou Edge</strong> (pas Firefox).</li>
-          <li>Cliquez <strong>تلاوة للبحث</strong> puis <strong>Autoriser</strong> le micro.</li>
-          <li>Récitez fort, ex. <em>قل هو الله أحد، الله الصمد…</em> — le texte apparaît en direct.</li>
-          <li>Si «&nbsp;Aucun son détecté&nbsp;» → vérifiez le micro système / l'onglet n'est pas muet.</li>
-          <li>La transcription passe par les serveurs Google : <strong>internet requis</strong>.</li>
+          <li>Use <strong>Chrome or Edge</strong> (not Firefox).</li>
+          <li>Click <strong>Recite to find</strong>, then <strong>Allow</strong> the microphone.</li>
+          <li>Recite loudly, e.g. <em>Qul huwa Allahu ahad, Allahu as-samad…</em> — the text appears live.</li>
+          <li>If “No speech heard” → check the system mic / the tab is not muted.</li>
+          <li>Transcription runs on Google servers: <strong>internet required</strong>.</li>
         </ol>
       </section>
 
       <section style={s.card}>
-        <h2 style={s.h2}>4 · Intégration <span style={s.tag}>copier-coller</span></h2>
+        <h2 style={s.h2}>4 · Integration <span style={s.tag}>copy-paste</span></h2>
         <pre style={s.code}>
 {`// mon-coran (React+Vite, état local)
 // import { VersetFinderMic } from "@bakemono-san/verset-finder-react";
@@ -115,7 +115,13 @@ export function App() {
 <VersetFinderMic onDetect={(r) => {
   if (r.status === "reject") return;
   router.push(\`/surah/\${r.surah}?ayah=\${r.ayah}\`);
-}} />`}
+}} />
+
+// Custom texts: locale preset + overrides (default locale is "en")
+<VersetFinderMic
+  locale="ar"
+  labels={{ states: { idle: "ابدأ التلاوة" }, ready: (n) => \`\${n} آية\` }}
+/>`}
         </pre>
       </section>
     </div>
@@ -140,14 +146,14 @@ function Diag() {
       setPerm("unknown");
     }
     fetch("/verset-finder-index.json", { method: "HEAD" })
-      .then((r) => setIdxOk(r.ok ? "ok (6236 versets)" : `HTTP ${r.status}`))
-      .catch(() => setIdxOk("échec réseau"));
+      .then((r) => setIdxOk(r.ok ? "ok (6236 ayahs)" : `HTTP ${r.status}`))
+      .catch(() => setIdxOk("network failed"));
   }, []);
   const rows: Array<[string, string, boolean]> = [
-    ["Navigateur", supported ? "compatible (Web Speech OK)" : "INCOMPATIBLE — utilisez Chrome/Edge", supported],
-    ["Permission micro", perm, perm === "granted" || perm === "prompt"],
-    ["Index Coran", idxOk, idxOk.startsWith("ok")],
-    ["Protocole", `${window.location.protocol}//${window.location.host}`, window.location.protocol === "https:" || window.location.hostname === "localhost"],
+    ["Browser", supported ? "compatible (Web Speech OK)" : "INCOMPATIBLE — use Chrome/Edge", supported],
+    ["Mic permission", perm, perm === "granted" || perm === "prompt"],
+    ["Quran index", idxOk, idxOk.startsWith("ok")],
+    ["Protocol", `${window.location.protocol}//${window.location.host}`, window.location.protocol === "https:" || window.location.hostname === "localhost"],
   ];
   return (
     <div style={{ display: "grid", gap: 4, marginBottom: 8, fontSize: 13 }}>
