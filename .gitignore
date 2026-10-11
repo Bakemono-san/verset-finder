@@ -26,3 +26,6 @@ playwright-report/
 
 # Packed tarballs
 *.tgz
+
+# Coverage
+coverage/
